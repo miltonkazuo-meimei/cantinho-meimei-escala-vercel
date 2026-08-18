@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { gerarId } from "@/lib/utils";
 
 const eventoSchema = z.object({
   data: z.string().min(1, "A data é obrigatória"),
@@ -37,7 +38,7 @@ export function EventoForm() {
 
     const caminhos: string[] = [];
     for (const foto of fotos) {
-      const caminho = `${crypto.randomUUID()}-${foto.name}`;
+      const caminho = `${gerarId()}-${foto.name}`;
       const { data: upload, error: erroUpload } = await supabase.storage
         .from("eventos-fotos")
         .upload(caminho, foto);

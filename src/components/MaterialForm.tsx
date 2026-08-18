@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { gerarId } from "@/lib/utils";
 import type { Livro } from "@/lib/types";
 
 const materialSchema = z.object({
@@ -54,7 +55,7 @@ export function MaterialForm({ livros }: MaterialFormProps) {
     let url_link: string | null = null;
 
     if (arquivo) {
-      const caminho = `${crypto.randomUUID()}-${arquivo.name}`;
+      const caminho = `${gerarId()}-${arquivo.name}`;
       const { data: upload, error: erroUpload } = await supabase.storage
         .from("materiais-apoio")
         .upload(caminho, arquivo);
