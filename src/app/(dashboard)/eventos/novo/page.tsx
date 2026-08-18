@@ -14,7 +14,7 @@ export default async function NovoEventoPage() {
         <h1 className="text-2xl font-semibold text-text-main">Novo evento</h1>
         <p className="text-sm text-text-main/60">Registre um novo evento realizado.</p>
       </div>
-      <EventoForm />
+      <EventoForm modo="novo" />
     </div>
   );
 }

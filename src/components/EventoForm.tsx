@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { Save } from "lucide-react";
+import Image from "next/image";
+import { Save, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarId } from "@/lib/utils";
 
@@ -16,9 +17,24 @@ const eventoSchema = z.object({
 
 type EventoFormValues = z.infer<typeof eventoSchema>;
 
-export function EventoForm() {
+type EventoFormProps = {
+  modo: "novo" | "editar";
+  eventoId?: string;
+  valoresIniciais?: Partial<EventoFormValues>;
+  fotosIniciais?: string[];
+};
+
+export function EventoForm({
+  modo,
+  eventoId,
+  valoresIniciais,
+  fotosIniciais = [],
+}: EventoFormProps) {
   const router = useRouter();
-  const [fotos, setFotos] = useState<File[]>([]);
+  const supabase = useMemo(() => createClient(), []);
+  const [fotosExistentes, setFotosExistentes] = useState(fotosIniciais);
+  const [fotosRemovidas, setFotosRemovidas] = useState<string[]>([]);
+  const [fotosNovas, setFotosNovas] = useState<File[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [erroServidor, setErroServidor] = useState<string | null>(null);
 
@@ -28,16 +44,32 @@ export function EventoForm() {
     formState: { errors },
   } = useForm<EventoFormValues>({
     resolver: zodResolver(eventoSchema),
-    defaultValues: { data: "", descricao: "" },
+    defaultValues: { data: "", descricao: "", ...valoresIniciais },
   });
+
+  function removerFotoExistente(caminho: string) {
+    setFotosExistentes((atual) => atual.filter((f) => f !== caminho));
+    setFotosRemovidas((atual) => [...atual, caminho]);
+  }
 
   async function onSubmit(valores: EventoFormValues) {
     setErroServidor(null);
     setEnviando(true);
-    const supabase = createClient();
 
-    const caminhos: string[] = [];
-    for (const foto of fotos) {
+    if (fotosRemovidas.length > 0) {
+      const { error: erroRemover } = await supabase.storage
+        .from("eventos-fotos")
+        .remove(fotosRemovidas);
+
+      if (erroRemover) {
+        setEnviando(false);
+        setErroServidor("Não foi possível remover as fotos excluídas. Tente novamente.");
+        return;
+      }
+    }
+
+    const caminhosNovos: string[] = [];
+    for (const foto of fotosNovas) {
       const caminho = `${gerarId()}-${foto.name}`;
       const { data: upload, error: erroUpload } = await supabase.storage
         .from("eventos-fotos")
@@ -48,14 +80,20 @@ export function EventoForm() {
         setErroServidor("Não foi possível enviar as fotos. Tente novamente.");
         return;
       }
-      caminhos.push(upload.path);
+      caminhosNovos.push(upload.path);
     }
 
-    const { error } = await supabase.from("eventos").insert({
+    const fotos = [...fotosExistentes, ...caminhosNovos];
+    const payload = {
       data: valores.data,
       descricao: valores.descricao,
-      fotos: caminhos.length > 0 ? caminhos : null,
-    });
+      fotos: fotos.length > 0 ? fotos : null,
+    };
+
+    const { error } =
+      modo === "novo"
+        ? await supabase.from("eventos").insert(payload)
+        : await supabase.from("eventos").update(payload).eq("id", eventoId!);
 
     setEnviando(false);
 
@@ -102,12 +140,35 @@ export function EventoForm() {
         <label htmlFor="fotos" className="mb-1 block text-sm font-medium text-text-main">
           Fotos (proporção recomendada 16:9, 1200×800 px)
         </label>
+
+        {fotosExistentes.length > 0 && (
+          <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {fotosExistentes.map((caminho) => {
+              const url = supabase.storage.from("eventos-fotos").getPublicUrl(caminho).data
+                .publicUrl;
+              return (
+                <div key={caminho} className="group relative aspect-video overflow-hidden rounded-md bg-black/5">
+                  <Image src={url} alt="" fill className="object-cover" sizes="150px" />
+                  <button
+                    type="button"
+                    onClick={() => removerFotoExistente(caminho)}
+                    aria-label="Remover foto"
+                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-danger"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <input
           id="fotos"
           type="file"
           accept="image/*"
           multiple
-          onChange={(e) => setFotos(Array.from(e.target.files ?? []))}
+          onChange={(e) => setFotosNovas(Array.from(e.target.files ?? []))}
           className="w-full text-sm"
         />
       </div>

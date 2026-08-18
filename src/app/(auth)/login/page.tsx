@@ -5,7 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { LogIn } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { LogIn, Mail, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const loginSchema = z.object({
@@ -55,28 +57,40 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-1 items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm rounded-xl bg-card p-8 shadow-sm">
-        <h1 className="text-center text-xl font-semibold text-text-main">
-          Cantinho da Meimei
-        </h1>
-        <p className="mt-1 text-center text-sm text-text-main/60">
-          Escala de Apresentações
-        </p>
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Image
+            src="/logo.png"
+            alt="Cantinho da Meimei"
+            width={96}
+            height={96}
+            className="mb-4 h-24 w-24 object-contain"
+            priority
+          />
+          <h1 className="text-xl font-bold text-text-main">Cantinho da Meimei</h1>
+          <p className="mt-1 text-sm text-text-main/60">Acesso ao sistema</p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-text-main">
               E-mail
             </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register("email")}
-              className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="seu@email.com"
-            />
+            <div className="relative">
+              <Mail
+                size={18}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-main/50"
+              />
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                {...register("email")}
+                className="w-full rounded-md border border-black/15 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+                placeholder="seu@email.com"
+              />
+            </div>
             {errors.email && (
               <p className="mt-1 text-xs text-danger">{errors.email.message}</p>
             )}
@@ -86,14 +100,20 @@ export default function LoginPage() {
             <label htmlFor="senha" className="mb-1 block text-sm font-medium text-text-main">
               Senha
             </label>
-            <input
-              id="senha"
-              type="password"
-              autoComplete="current-password"
-              {...register("senha")}
-              className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Lock
+                size={18}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-main/50"
+              />
+              <input
+                id="senha"
+                type="password"
+                autoComplete="current-password"
+                {...register("senha")}
+                className="w-full rounded-md border border-black/15 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+                placeholder="••••••••"
+              />
+            </div>
             {errors.senha && (
               <p className="mt-1 text-xs text-danger">{errors.senha.message}</p>
             )}
@@ -114,7 +134,20 @@ export default function LoginPage() {
             {isSubmitting ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/esqueci-senha"
+            className="text-sm text-primary transition-colors hover:text-primary/80"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
       </div>
+
+      <p className="mt-8 text-center text-sm text-text-main/50">
+        © {new Date().getFullYear()} Cantinho da Meimei
+      </p>
     </div>
   );
 }

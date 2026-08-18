@@ -5,19 +5,26 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { Save } from "lucide-react";
+import { Save, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { criarVoluntarioComSenha } from "@/lib/actions/voluntarios";
 import { ToggleField } from "@/components/ToggleField";
 
-const voluntarioSchema = z.object({
-  nome: z.string().min(1, "O nome é obrigatório"),
-  telefone: z.string().min(1, "O telefone é obrigatório"),
-  email: z.string().min(1, "O e-mail é obrigatório").email("Informe um e-mail válido"),
-  eh_organizador: z.boolean(),
-  ativo: z.boolean(),
-});
+function criarSchema(modo: "novo" | "editar") {
+  return z.object({
+    nome: z.string().min(1, "O nome é obrigatório"),
+    telefone: z.string().min(1, "O telefone é obrigatório"),
+    email: z.string().min(1, "O e-mail é obrigatório").email("Informe um e-mail válido"),
+    senha:
+      modo === "novo"
+        ? z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
+        : z.string().optional(),
+    eh_organizador: z.boolean(),
+    ativo: z.boolean(),
+  });
+}
 
-type VoluntarioFormValues = z.infer<typeof voluntarioSchema>;
+type VoluntarioFormValues = z.infer<ReturnType<typeof criarSchema>>;
 
 type VoluntarioFormProps = {
   modo: "novo" | "editar";
@@ -35,11 +42,12 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<VoluntarioFormValues>({
-    resolver: zodResolver(voluntarioSchema),
+    resolver: zodResolver(criarSchema(modo)),
     defaultValues: {
       nome: "",
       telefone: "",
       email: "",
+      senha: "",
       eh_organizador: false,
       ativo: true,
       ...valoresIniciais,
@@ -48,20 +56,42 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
 
   async function onSubmit(valores: VoluntarioFormValues) {
     setErroServidor(null);
-    const supabase = createClient();
 
-    const { error } =
-      modo === "novo"
-        ? await supabase.from("voluntarios").insert(valores)
-        : await supabase.from("voluntarios").update(valores).eq("id", voluntarioId!);
+    if (modo === "novo") {
+      const { error } = await criarVoluntarioComSenha({
+        nome: valores.nome,
+        telefone: valores.telefone,
+        email: valores.email,
+        senha: valores.senha!,
+        eh_organizador: valores.eh_organizador,
+        ativo: valores.ativo,
+      });
 
-    if (error) {
-      if (error.code === "23505") {
-        setErroServidor("Já existe um voluntário com este e-mail.");
-      } else {
-        setErroServidor("Não foi possível salvar o voluntário. Tente novamente.");
+      if (error) {
+        setErroServidor(error);
+        return;
       }
-      return;
+    } else {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("voluntarios")
+        .update({
+          nome: valores.nome,
+          telefone: valores.telefone,
+          email: valores.email,
+          eh_organizador: valores.eh_organizador,
+          ativo: valores.ativo,
+        })
+        .eq("id", voluntarioId!);
+
+      if (error) {
+        if (error.code === "23505") {
+          setErroServidor("Já existe um voluntário com este e-mail.");
+        } else {
+          setErroServidor("Não foi possível salvar o voluntário. Tente novamente.");
+        }
+        return;
+      }
     }
 
     router.push("/voluntarios");
@@ -111,6 +141,32 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
         />
         {errors.email && <p className="mt-1 text-xs text-danger">{errors.email.message}</p>}
       </div>
+
+      {modo === "novo" && (
+        <div>
+          <label htmlFor="senha" className="mb-1 block text-sm font-medium text-text-main">
+            Senha <span className="text-danger">*</span>
+          </label>
+          <div className="relative">
+            <Lock
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40"
+            />
+            <input
+              id="senha"
+              type="password"
+              autoComplete="new-password"
+              {...register("senha")}
+              className="w-full rounded-md border border-black/15 py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="••••••••"
+            />
+          </div>
+          <p className="mt-1 text-xs text-text-main/50">
+            O voluntário usará este e-mail e senha para entrar no sistema.
+          </p>
+          {errors.senha && <p className="mt-1 text-xs text-danger">{errors.senha.message}</p>}
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Controller

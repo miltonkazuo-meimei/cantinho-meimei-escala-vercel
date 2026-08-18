@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -44,8 +45,15 @@ export function NavBar({ email, ehOrganizador }: NavBarProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-card">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/calendario" className="text-lg font-semibold text-text-main">
-          Cantinho da Meimei
+        <Link href="/calendario" className="flex items-center gap-2 text-lg font-semibold text-text-main">
+          <Image
+            src="/logo.png"
+            alt="Cantinho da Meimei"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+          />
+          <span className="hidden sm:inline">Cantinho da Meimei</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

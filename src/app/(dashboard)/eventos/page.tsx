@@ -1,13 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Plus, PartyPopper } from "lucide-react";
+import { Plus } from "lucide-react";
 import { getPerfil } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-
-function formatarDataPtBr(data: string) {
-  const [ano, mes, dia] = data.split("-");
-  return `${dia}/${mes}/${ano}`;
-}
+import { EventosGrid } from "@/components/EventosGrid";
 
 export default async function EventosPage() {
   const perfil = await getPerfil();
@@ -35,45 +30,7 @@ export default async function EventosPage() {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(eventos ?? []).map((evento) => {
-          const primeiraFoto = evento.fotos?.[0]
-            ? supabase.storage.from("eventos-fotos").getPublicUrl(evento.fotos[0]).data
-                .publicUrl
-            : null;
-
-          return (
-            <div key={evento.id} className="overflow-hidden rounded-xl bg-card shadow-sm">
-              <div className="relative aspect-video w-full bg-black/5">
-                {primeiraFoto ? (
-                  <Image
-                    src={primeiraFoto}
-                    alt={evento.descricao}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-text-main/30">
-                    <PartyPopper size={32} />
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <p className="text-xs font-medium text-primary">
-                  {formatarDataPtBr(evento.data)}
-                </p>
-                <p className="mt-1 text-sm text-text-main/80">{evento.descricao}</p>
-              </div>
-            </div>
-          );
-        })}
-        {(eventos ?? []).length === 0 && (
-          <p className="col-span-full py-6 text-center text-text-main/50">
-            Nenhum evento cadastrado.
-          </p>
-        )}
-      </div>
+      <EventosGrid eventos={eventos ?? []} ehOrganizador={perfil.ehOrganizador} />
     </div>
   );
 }
