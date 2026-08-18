@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { gerarId } from "@/lib/utils";
+import { gerarId, sanitizarNomeArquivo } from "@/lib/utils";
 import type { Livro } from "@/lib/types";
 
 const materialSchema = z.object({
@@ -43,8 +43,8 @@ export function MaterialForm({ livros }: MaterialFormProps) {
   async function onSubmit(valores: MaterialFormValues) {
     setErroServidor(null);
 
-    if (!arquivo && !valores.url_link.trim()) {
-      setErroServidor("Envie um arquivo ou informe um link externo.");
+    if (!arquivo && !valores.url_link.trim() && !valores.livro_id) {
+      setErroServidor("Informe ao menos um livro, arquivo ou link externo.");
       return;
     }
 
@@ -52,10 +52,10 @@ export function MaterialForm({ livros }: MaterialFormProps) {
     const supabase = createClient();
 
     let url_arquivo: string | null = null;
-    let url_link: string | null = null;
+    const url_link: string | null = valores.url_link.trim() || null;
 
     if (arquivo) {
-      const caminho = `${gerarId()}-${arquivo.name}`;
+      const caminho = `${gerarId()}-${sanitizarNomeArquivo(arquivo.name)}`;
       const { data: upload, error: erroUpload } = await supabase.storage
         .from("materiais-apoio")
         .upload(caminho, arquivo);
@@ -66,8 +66,6 @@ export function MaterialForm({ livros }: MaterialFormProps) {
         return;
       }
       url_arquivo = upload.path;
-    } else {
-      url_link = valores.url_link.trim();
     }
 
     const { error } = await supabase.from("materiais_apoio").insert({
@@ -158,9 +156,8 @@ export function MaterialForm({ livros }: MaterialFormProps) {
           id="url_link"
           type="url"
           {...register("url_link")}
-          disabled={Boolean(arquivo)}
           placeholder="https://..."
-          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none disabled:bg-black/5"
+          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
         />
       </div>
 

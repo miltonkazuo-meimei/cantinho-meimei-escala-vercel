@@ -50,14 +50,16 @@ export function MateriaisLista({ materiais }: { materiais: MaterialComLivro[] })
                 )}
               </div>
             </div>
-            <button
-              onClick={() => acessar(material)}
-              className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
-              aria-label="Acessar material"
-            >
-              <ExternalLink size={16} />
-              Acessar
-            </button>
+            {(material.url_link || material.url_arquivo) && (
+              <button
+                onClick={() => acessar(material)}
+                className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+                aria-label="Acessar material"
+              >
+                <ExternalLink size={16} />
+                Acessar
+              </button>
+            )}
           </div>
         );
       })}
