@@ -54,8 +54,12 @@ export default function RedefinirSenhaPage() {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
+      const tipo = hash.get("type");
 
-      if (hash.get("type") === "recovery" && accessToken && refreshToken) {
+      // "recovery" vem do fluxo de esqueci a senha; "invite" vem do e-mail
+      // de boas-vindas ao cadastrar um novo voluntário — ambos usam a
+      // mesma rotina de definir senha nesta página.
+      if ((tipo === "recovery" || tipo === "invite") && accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
