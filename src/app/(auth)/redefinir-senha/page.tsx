@@ -37,8 +37,7 @@ export default function RedefinirSenhaPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    // O link do e-mail cria a sessão de recuperação de forma assíncrona
-    // ao carregar a página; aguardamos o evento antes de liberar o formulário.
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -47,9 +46,32 @@ export default function RedefinirSenhaPage() {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function estabelecerSessao() {
+      // O link de recuperação vem no formato antigo (tokens no #hash da URL),
+      // mas o client é configurado para PKCE (via @supabase/ssr), que só
+      // reconhece automaticamente o formato ?code=. Por isso extraímos e
+      // aplicamos a sessão manualmente quando o hash está presente.
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+
+      if (hash.get("type") === "recovery" && accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        window.history.replaceState(null, "", window.location.pathname);
+        setSessaoValida((atual) => atual ?? !error);
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSessaoValida((atual) => atual ?? Boolean(session));
-    });
+    }
+
+    estabelecerSessao();
 
     return () => subscription.unsubscribe();
   }, []);
