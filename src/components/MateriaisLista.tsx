@@ -1,20 +1,12 @@
 "use client";
 
-import { FileText, PlayCircle, Presentation, HardDrive, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { MODALIDADE_CONFIG } from "@/lib/materiais";
 import type { MaterialApoio, TipoMaterial } from "@/lib/types";
 
-const TIPO_CONFIG: Record<TipoMaterial, { label: string; icon: typeof FileText; className: string }> = {
-  pdf: { label: "PDF", icon: FileText, className: "bg-danger/10 text-danger" },
-  youtube: { label: "YouTube", icon: PlayCircle, className: "bg-danger/10 text-danger" },
-  powerpoint: { label: "PowerPoint", icon: Presentation, className: "bg-primary/10 text-primary" },
-  gdrive: { label: "Google Drive", icon: HardDrive, className: "bg-success/10 text-success" },
-};
-
-type MaterialComLivro = MaterialApoio & { livro: { nome: string } | null };
-
-export function MateriaisLista({ materiais }: { materiais: MaterialComLivro[] }) {
-  async function acessar(material: MaterialComLivro) {
+export function MateriaisLista({ materiais }: { materiais: MaterialApoio[] }) {
+  async function acessar(material: MaterialApoio) {
     if (material.url_link) {
       window.open(material.url_link, "_blank", "noopener,noreferrer");
       return;
@@ -34,7 +26,7 @@ export function MateriaisLista({ materiais }: { materiais: MaterialComLivro[] })
   return (
     <div className="divide-y divide-black/5 rounded-xl bg-card shadow-sm">
       {materiais.map((material) => {
-        const config = TIPO_CONFIG[material.tipo as TipoMaterial] ?? TIPO_CONFIG.pdf;
+        const config = MODALIDADE_CONFIG[material.tipo as TipoMaterial] ?? MODALIDADE_CONFIG.outros;
         const Icon = config.icon;
         return (
           <div key={material.id} className="flex items-center justify-between gap-4 px-4 py-3">
@@ -43,12 +35,7 @@ export function MateriaisLista({ materiais }: { materiais: MaterialComLivro[] })
                 <Icon size={14} />
                 {config.label}
               </span>
-              <div className="min-w-0">
-                <p className="truncate font-medium text-text-main">{material.titulo}</p>
-                {material.livro && (
-                  <p className="truncate text-xs text-text-main/50">{material.livro.nome}</p>
-                )}
-              </div>
+              <p className="min-w-0 truncate font-medium text-text-main">{material.titulo}</p>
             </div>
             {(material.url_link || material.url_arquivo) && (
               <button

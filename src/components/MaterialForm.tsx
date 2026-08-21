@@ -8,24 +8,18 @@ import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarId, sanitizarNomeArquivo } from "@/lib/utils";
-import type { Livro } from "@/lib/types";
 
 const materialSchema = z.object({
   titulo: z.string().min(1, "O título é obrigatório"),
-  tipo: z.enum(["pdf", "youtube", "powerpoint", "gdrive"], {
-    error: "Selecione o tipo do material",
+  tipo: z.enum(["livros", "videos", "apresentacoes", "normas", "audios", "outros"], {
+    error: "Selecione a modalidade do material",
   }),
-  livro_id: z.string(),
   url_link: z.string(),
 });
 
 type MaterialFormValues = z.infer<typeof materialSchema>;
 
-type MaterialFormProps = {
-  livros: Livro[];
-};
-
-export function MaterialForm({ livros }: MaterialFormProps) {
+export function MaterialForm() {
   const router = useRouter();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -37,14 +31,14 @@ export function MaterialForm({ livros }: MaterialFormProps) {
     formState: { errors },
   } = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { titulo: "", tipo: "pdf", livro_id: "", url_link: "" },
+    defaultValues: { titulo: "", tipo: "livros", url_link: "" },
   });
 
   async function onSubmit(valores: MaterialFormValues) {
     setErroServidor(null);
 
-    if (!arquivo && !valores.url_link.trim() && !valores.livro_id) {
-      setErroServidor("Informe ao menos um livro, arquivo ou link externo.");
+    if (!arquivo && !valores.url_link.trim()) {
+      setErroServidor("Envie um arquivo ou informe um link externo.");
       return;
     }
 
@@ -71,7 +65,6 @@ export function MaterialForm({ livros }: MaterialFormProps) {
     const { error } = await supabase.from("materiais_apoio").insert({
       titulo: valores.titulo,
       tipo: valores.tipo,
-      livro_id: valores.livro_id || null,
       url_arquivo,
       url_link,
     });
@@ -102,40 +95,22 @@ export function MaterialForm({ livros }: MaterialFormProps) {
         {errors.titulo && <p className="mt-1 text-xs text-danger">{errors.titulo.message}</p>}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-text-main">
-            Tipo <span className="text-danger">*</span>
-          </label>
-          <select
-            id="tipo"
-            {...register("tipo")}
-            className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-          >
-            <option value="pdf">PDF</option>
-            <option value="youtube">YouTube</option>
-            <option value="powerpoint">PowerPoint</option>
-            <option value="gdrive">Google Drive</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="livro_id" className="mb-1 block text-sm font-medium text-text-main">
-            Livro
-          </label>
-          <select
-            id="livro_id"
-            {...register("livro_id")}
-            className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-          >
-            <option value="">Nenhum</option>
-            {livros.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-text-main">
+          Modalidade <span className="text-danger">*</span>
+        </label>
+        <select
+          id="tipo"
+          {...register("tipo")}
+          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        >
+          <option value="livros">Livros</option>
+          <option value="videos">Vídeos</option>
+          <option value="apresentacoes">Apresentações</option>
+          <option value="normas">Normas</option>
+          <option value="audios">Áudios</option>
+          <option value="outros">Outros</option>
+        </select>
       </div>
 
       <div className="rounded-md border border-dashed border-black/20 p-4">

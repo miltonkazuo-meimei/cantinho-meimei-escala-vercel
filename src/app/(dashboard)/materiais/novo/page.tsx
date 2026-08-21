@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getPerfil } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { MaterialForm } from "@/components/MaterialForm";
 
 export default async function NovoMaterialPage() {
@@ -8,9 +7,6 @@ export default async function NovoMaterialPage() {
   if (!perfil.ehOrganizador) {
     redirect("/materiais");
   }
-
-  const supabase = await createClient();
-  const { data: livros } = await supabase.from("livros").select("*").order("nome");
 
   return (
     <div className="space-y-4">
@@ -20,7 +16,7 @@ export default async function NovoMaterialPage() {
           Envie um arquivo ou informe um link externo.
         </p>
       </div>
-      <MaterialForm livros={livros ?? []} />
+      <MaterialForm />
     </div>
   );
 }

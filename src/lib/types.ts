@@ -13,7 +13,13 @@ export type StatusAgendamento =
   | "falta_abertura"
   | "falta_apresentacao";
 
-export type TipoMaterial = "pdf" | "youtube" | "powerpoint" | "gdrive";
+export type TipoMaterial =
+  | "livros"
+  | "videos"
+  | "apresentacoes"
+  | "normas"
+  | "audios"
+  | "outros";
 
 export type AgendamentoComRelacoes = Agendamento & {
   voluntario_abertura: Voluntario | null;

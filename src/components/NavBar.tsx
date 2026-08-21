@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   Users,
-  BookOpen,
   FolderOpen,
   PartyPopper,
   Menu,
@@ -20,8 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 const LINKS = [
   { href: "/calendario", label: "Calendário", icon: CalendarDays },
   { href: "/voluntarios", label: "Voluntários", icon: Users },
-  { href: "/livros", label: "Livros", icon: BookOpen },
-  { href: "/materiais", label: "Materiais", icon: FolderOpen },
+  { href: "/materiais", label: "Materiais Apoio", icon: FolderOpen },
   { href: "/eventos", label: "Eventos", icon: PartyPopper },
 ];
 
