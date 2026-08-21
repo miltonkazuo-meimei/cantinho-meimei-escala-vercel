@@ -145,6 +145,7 @@ export function CalendarioMensal({ ehOrganizador }: CalendarioMensalProps) {
           onFechar={() => setSelecionado(null)}
           onEditar={() => router.push(`/agendamentos/${selecionado.id}/editar`)}
           onCancelar={() => setMostrarCancelar(true)}
+          onNovoAgendamento={() => router.push(`/agendamentos/novo?data=${selecionado.data}`)}
         />
       )}
 

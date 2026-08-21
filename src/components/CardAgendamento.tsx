@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { BadgeStatus } from "@/components/BadgeStatus";
 import type { AgendamentoComRelacoes } from "@/lib/types";
 
@@ -17,6 +17,7 @@ type CardAgendamentoProps = {
   onEditar: () => void;
   onCancelar: () => void;
   onFechar: () => void;
+  onNovoAgendamento: () => void;
 };
 
 export function CardAgendamento({
@@ -25,7 +26,9 @@ export function CardAgendamento({
   onEditar,
   onCancelar,
   onFechar,
+  onNovoAgendamento,
 }: CardAgendamentoProps) {
+  const excluido = agendamento.status === "cancelado";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl">
@@ -80,19 +83,37 @@ export function CardAgendamento({
         {ehOrganizador && (
           <div className="mt-6 flex justify-end gap-3">
             <button
-              onClick={onCancelar}
-              className="flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10"
+              onClick={onFechar}
+              className="rounded-md px-4 py-2 text-sm font-medium text-text-main/70 hover:bg-black/5"
             >
-              <X size={16} />
               Cancelar
             </button>
-            <button
-              onClick={onEditar}
-              className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-            >
-              <Pencil size={16} />
-              Editar
-            </button>
+            {excluido ? (
+              <button
+                onClick={onNovoAgendamento}
+                className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+              >
+                <Plus size={16} />
+                Novo agendamento
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onCancelar}
+                  className="flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10"
+                >
+                  <Trash2 size={16} />
+                  Excluir
+                </button>
+                <button
+                  onClick={onEditar}
+                  className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                >
+                  <Pencil size={16} />
+                  Editar
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

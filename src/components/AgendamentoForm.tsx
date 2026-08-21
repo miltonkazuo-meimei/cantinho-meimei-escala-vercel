@@ -68,13 +68,19 @@ export function AgendamentoForm({
       observacoes: valores.observacoes || null,
     };
 
-    const { error } =
-      modo === "novo"
-        ? await supabase.from("agendamentos").insert(payload)
-        : await supabase
-            .from("agendamentos")
-            .update(payload)
-            .eq("id", agendamentoId!);
+    let error;
+
+    if (modo === "novo") {
+      // Só pode existir um agendamento por data. Se já houver um (ex: um
+      // agendamento excluído anteriormente), o novo o substitui.
+      await supabase.from("agendamentos").delete().eq("data", valores.data);
+      ({ error } = await supabase.from("agendamentos").insert(payload));
+    } else {
+      ({ error } = await supabase
+        .from("agendamentos")
+        .update(payload)
+        .eq("id", agendamentoId!));
+    }
 
     if (error) {
       if (error.code === "23505") {
