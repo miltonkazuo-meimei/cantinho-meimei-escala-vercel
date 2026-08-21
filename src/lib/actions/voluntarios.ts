@@ -30,32 +30,70 @@ export async function criarVoluntario(dados: CriarVoluntarioInput) {
 
   const supabase = createServiceClient();
 
-  const { data: usuarioCriado, error: erroAuth } = dados.senha
-    ? // Organizador define a senha diretamente — usada como alternativa
-      // quando o e-mail de convite não é confiável (ex: filtros do
-      // destinatário). O organizador é responsável por repassar a senha
-      // ao voluntário por outro meio.
-      await supabase.auth.admin.createUser({
-        email: dados.email,
-        password: dados.senha,
-        email_confirm: true,
-      })
-    : // Cria a conta sem senha e dispara o e-mail de boas-vindas (template
-      // "Invite user" do Supabase); o voluntário define a própria senha ao
-      // clicar no link, reaproveitando a mesma página de "esqueci a senha".
-      await supabase.auth.admin.inviteUserByEmail(dados.email, {
-        redirectTo: `${await obterOrigem()}/redefinir-senha`,
-      });
+  let usuarioId: string;
+  let criouContaNova: boolean;
 
-  if (erroAuth) {
-    if (erroAuth.message.includes("already been registered")) {
-      return { error: "Já existe uma conta com este e-mail." };
+  if (dados.senha) {
+    // Organizador define a senha diretamente — usada como alternativa
+    // quando o e-mail de convite não é confiável (ex: filtros do
+    // destinatário). O organizador é responsável por repassar a senha
+    // ao voluntário por outro meio.
+    const { data: usuarioCriado, error: erroCriar } = await supabase.auth.admin.createUser({
+      email: dados.email,
+      password: dados.senha,
+      email_confirm: true,
+    });
+
+    if (!erroCriar) {
+      usuarioId = usuarioCriado.user.id;
+      criouContaNova = true;
+    } else if (erroCriar.message.includes("already been registered")) {
+      // Já existe uma conta com este e-mail (ex: convite anterior que
+      // ficou sem o registro de voluntário correspondente) — em vez de
+      // bloquear, define a nova senha na conta existente.
+      const { data: lista, error: erroListar } = await supabase.auth.admin.listUsers({
+        perPage: 1000,
+      });
+      const usuarioExistente = erroListar
+        ? undefined
+        : lista.users.find((u) => u.email?.toLowerCase() === dados.email.toLowerCase());
+
+      if (!usuarioExistente) {
+        return { error: "Não foi possível definir a senha. Tente novamente." };
+      }
+
+      const { error: erroSenha } = await supabase.auth.admin.updateUserById(
+        usuarioExistente.id,
+        { password: dados.senha }
+      );
+
+      if (erroSenha) {
+        return { error: "Não foi possível definir a senha. Tente novamente." };
+      }
+
+      usuarioId = usuarioExistente.id;
+      criouContaNova = false;
+    } else {
+      return { error: "Não foi possível criar o acesso do voluntário. Tente novamente." };
     }
-    return {
-      error: dados.senha
-        ? "Não foi possível criar o acesso do voluntário. Tente novamente."
-        : "Não foi possível enviar o convite ao voluntário. Tente novamente.",
-    };
+  } else {
+    // Cria a conta sem senha e dispara o e-mail de boas-vindas (template
+    // "Invite user" do Supabase); o voluntário define a própria senha ao
+    // clicar no link, reaproveitando a mesma página de "esqueci a senha".
+    const { data: usuarioCriado, error: erroConvite } = await supabase.auth.admin.inviteUserByEmail(
+      dados.email,
+      { redirectTo: `${await obterOrigem()}/redefinir-senha` }
+    );
+
+    if (erroConvite) {
+      if (erroConvite.message.includes("already been registered")) {
+        return { error: "Já existe uma conta com este e-mail." };
+      }
+      return { error: "Não foi possível enviar o convite ao voluntário. Tente novamente." };
+    }
+
+    usuarioId = usuarioCriado.user.id;
+    criouContaNova = true;
   }
 
   const { error: erroVoluntario } = await supabase.from("voluntarios").insert({
@@ -67,8 +105,12 @@ export async function criarVoluntario(dados: CriarVoluntarioInput) {
   });
 
   if (erroVoluntario) {
-    // Desfaz o usuário de autenticação já criado para não deixar acesso órfão.
-    await supabase.auth.admin.deleteUser(usuarioCriado.user.id);
+    if (criouContaNova) {
+      // Desfaz o usuário de autenticação recém-criado para não deixar
+      // acesso órfão. Se a conta já existia antes desta chamada, ela é
+      // preservada mesmo com a senha atualizada.
+      await supabase.auth.admin.deleteUser(usuarioId);
+    }
 
     if (erroVoluntario.code === "23505") {
       return { error: "Já existe um voluntário com este e-mail." };
