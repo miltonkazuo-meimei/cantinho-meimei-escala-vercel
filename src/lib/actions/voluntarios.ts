@@ -96,13 +96,36 @@ export async function criarVoluntario(dados: CriarVoluntarioInput) {
     criouContaNova = true;
   }
 
-  const { error: erroVoluntario } = await supabase.from("voluntarios").insert({
+  const dadosVoluntario = {
     nome: dados.nome,
     telefone: dados.telefone,
     email: dados.email,
     eh_organizador: dados.eh_organizador,
     ativo: dados.ativo,
-  });
+  };
+
+  let erroVoluntario;
+
+  if (dados.senha) {
+    // No modo de senha manual, se já existir um voluntário cadastrado com
+    // este e-mail (ex: o próprio organizador redefinindo a senha de
+    // alguém já ativo), atualiza o registro em vez de bloquear — é assim
+    // que o organizador "sobrepõe" a senha existente.
+    const { data: voluntarioExistente } = await supabase
+      .from("voluntarios")
+      .select("id")
+      .eq("email", dados.email)
+      .maybeSingle();
+
+    ({ error: erroVoluntario } = voluntarioExistente
+      ? await supabase
+          .from("voluntarios")
+          .update(dadosVoluntario)
+          .eq("id", voluntarioExistente.id)
+      : await supabase.from("voluntarios").insert(dadosVoluntario));
+  } else {
+    ({ error: erroVoluntario } = await supabase.from("voluntarios").insert(dadosVoluntario));
+  }
 
   if (erroVoluntario) {
     if (criouContaNova) {
