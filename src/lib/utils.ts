@@ -13,3 +13,11 @@ export function sanitizarNomeArquivo(nome: string): string {
   const semAcentos = nome.normalize("NFD").replace(/\p{Diacritic}/gu, "");
   return semAcentos.replace(/[^a-zA-Z0-9.-]/g, "-");
 }
+
+export function hojeISO(): string {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}

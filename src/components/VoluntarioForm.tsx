@@ -5,7 +5,7 @@ import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { Save, Lock } from "lucide-react";
+import { Save, Lock, Cake } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { criarVoluntario } from "@/lib/actions/voluntarios";
 import { ToggleField } from "@/components/ToggleField";
@@ -15,6 +15,7 @@ const voluntarioSchema = z
     nome: z.string().min(1, "O nome é obrigatório"),
     telefone: z.string().min(1, "O telefone é obrigatório"),
     email: z.string().min(1, "O e-mail é obrigatório").email("Informe um e-mail válido"),
+    data_nascimento: z.string().optional(),
     modoSenha: z.enum(["convite", "manual"]).optional(),
     senha: z.string().optional(),
     eh_organizador: z.boolean(),
@@ -53,6 +54,7 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
       nome: "",
       telefone: "",
       email: "",
+      data_nascimento: "",
       modoSenha: "convite",
       senha: "",
       eh_organizador: false,
@@ -71,6 +73,7 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
         nome: valores.nome,
         telefone: valores.telefone,
         email: valores.email,
+        data_nascimento: valores.data_nascimento || undefined,
         eh_organizador: valores.eh_organizador,
         ativo: valores.ativo,
         senha: valores.modoSenha === "manual" ? valores.senha : undefined,
@@ -88,6 +91,7 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
           nome: valores.nome,
           telefone: valores.telefone,
           email: valores.email,
+          data_nascimento: valores.data_nascimento || null,
           eh_organizador: valores.eh_organizador,
           ativo: valores.ativo,
         })
@@ -149,6 +153,27 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
           className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
         />
         {errors.email && <p className="mt-1 text-xs text-danger">{errors.email.message}</p>}
+      </div>
+
+      <div>
+        <label
+          htmlFor="data_nascimento"
+          className="mb-1 block text-sm font-medium text-text-main"
+        >
+          Data de nascimento
+        </label>
+        <div className="relative">
+          <Cake
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40"
+          />
+          <input
+            id="data_nascimento"
+            type="date"
+            {...register("data_nascimento")}
+            className="w-full rounded-md border border-black/15 py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none"
+          />
+        </div>
       </div>
 
       {modo === "novo" && (

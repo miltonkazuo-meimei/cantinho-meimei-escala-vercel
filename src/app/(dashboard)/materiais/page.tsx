@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { getPerfil } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MateriaisLista } from "@/components/MateriaisLista";
@@ -36,28 +36,14 @@ export default async function MateriaisPage({
       .from("materiais_apoio")
       .select("*")
       .eq("tipo", modalidade)
-      .order("criado_em", { ascending: false });
+      .order("data", { ascending: false });
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Link
-              href="/materiais"
-              className="mb-1 flex items-center gap-1 text-sm text-text-main/60 hover:text-text-main"
-            >
-              <ArrowLeft size={14} />
-              Voltar
-            </Link>
-            <h1 className="text-2xl font-semibold text-text-main">
-              {MODALIDADE_CONFIG[modalidade].label}
-            </h1>
-          </div>
-          {novoMaterialBotao}
-        </div>
-
-        <MateriaisLista materiais={materiais ?? []} />
-      </div>
+      <MateriaisLista
+        materiais={materiais ?? []}
+        titulo={MODALIDADE_CONFIG[modalidade].label}
+        ehOrganizador={perfil.ehOrganizador}
+      />
     );
   }
 

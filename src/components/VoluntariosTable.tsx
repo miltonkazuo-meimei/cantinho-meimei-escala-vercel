@@ -7,6 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import type { Voluntario } from "@/lib/types";
 
+function formatarDataPtBr(data: string) {
+  const [ano, mes, dia] = data.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
 type VoluntariosTableProps = {
   voluntarios: Voluntario[];
   ehOrganizador: boolean;
@@ -51,6 +56,7 @@ export function VoluntariosTable({ voluntarios, ehOrganizador }: VoluntariosTabl
               <th className="px-4 py-3 font-medium">Nome</th>
               <th className="px-4 py-3 font-medium">Telefone</th>
               <th className="px-4 py-3 font-medium">E-mail</th>
+              <th className="px-4 py-3 font-medium">Nascimento</th>
               <th className="px-4 py-3 font-medium">Organizador</th>
               <th className="px-4 py-3 font-medium">Ativo</th>
               {ehOrganizador && <th className="px-4 py-3 font-medium">Ações</th>}
@@ -62,6 +68,9 @@ export function VoluntariosTable({ voluntarios, ehOrganizador }: VoluntariosTabl
                 <td className="px-4 py-3 text-text-main">{v.nome}</td>
                 <td className="px-4 py-3 text-text-main/80">{v.telefone}</td>
                 <td className="px-4 py-3 text-text-main/80">{v.email}</td>
+                <td className="px-4 py-3 text-text-main/80">
+                  {v.data_nascimento ? formatarDataPtBr(v.data_nascimento) : "—"}
+                </td>
                 <td className="px-4 py-3">
                   {v.eh_organizador && (
                     <ShieldCheck size={18} className="text-success" aria-label="Organizador" />
@@ -100,7 +109,7 @@ export function VoluntariosTable({ voluntarios, ehOrganizador }: VoluntariosTabl
             ))}
             {lista.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-text-main/50">
+                <td colSpan={ehOrganizador ? 7 : 6} className="px-4 py-6 text-center text-text-main/50">
                   Nenhum voluntário cadastrado.
                 </td>
               </tr>

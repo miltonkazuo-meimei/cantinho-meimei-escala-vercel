@@ -38,6 +38,7 @@ export default async function EditarVoluntarioPage({
           nome: voluntario.nome,
           telefone: voluntario.telefone,
           email: voluntario.email,
+          data_nascimento: voluntario.data_nascimento ?? "",
           eh_organizador: voluntario.eh_organizador ?? false,
           ativo: voluntario.ativo ?? true,
         }}

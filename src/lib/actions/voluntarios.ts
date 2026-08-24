@@ -8,6 +8,7 @@ type CriarVoluntarioInput = {
   nome: string;
   telefone: string;
   email: string;
+  data_nascimento?: string;
   eh_organizador: boolean;
   ativo: boolean;
   senha?: string;
@@ -100,6 +101,7 @@ export async function criarVoluntario(dados: CriarVoluntarioInput) {
     nome: dados.nome,
     telefone: dados.telefone,
     email: dados.email,
+    data_nascimento: dados.data_nascimento || null,
     eh_organizador: dados.eh_organizador,
     ativo: dados.ativo,
   };

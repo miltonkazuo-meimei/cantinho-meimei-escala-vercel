@@ -7,10 +7,11 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { gerarId, sanitizarNomeArquivo } from "@/lib/utils";
+import { gerarId, sanitizarNomeArquivo, hojeISO } from "@/lib/utils";
 
 const materialSchema = z.object({
   titulo: z.string().min(1, "O título é obrigatório"),
+  data: z.string().min(1, "A data é obrigatória"),
   tipo: z.enum(["livros", "videos", "apresentacoes", "normas", "audios", "outros"], {
     error: "Selecione a modalidade do material",
   }),
@@ -31,7 +32,7 @@ export function MaterialForm() {
     formState: { errors },
   } = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { titulo: "", tipo: "livros", url_link: "" },
+    defaultValues: { titulo: "", data: hojeISO(), tipo: "livros", url_link: "" },
   });
 
   async function onSubmit(valores: MaterialFormValues) {
@@ -64,6 +65,7 @@ export function MaterialForm() {
 
     const { error } = await supabase.from("materiais_apoio").insert({
       titulo: valores.titulo,
+      data: valores.data,
       tipo: valores.tipo,
       url_arquivo,
       url_link,
@@ -95,22 +97,37 @@ export function MaterialForm() {
         {errors.titulo && <p className="mt-1 text-xs text-danger">{errors.titulo.message}</p>}
       </div>
 
-      <div>
-        <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-text-main">
-          Modalidade <span className="text-danger">*</span>
-        </label>
-        <select
-          id="tipo"
-          {...register("tipo")}
-          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-        >
-          <option value="livros">Livros</option>
-          <option value="videos">Vídeos</option>
-          <option value="apresentacoes">Apresentações</option>
-          <option value="normas">Normas</option>
-          <option value="audios">Áudios</option>
-          <option value="outros">Outros</option>
-        </select>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-text-main">
+            Modalidade <span className="text-danger">*</span>
+          </label>
+          <select
+            id="tipo"
+            {...register("tipo")}
+            className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          >
+            <option value="livros">Livros</option>
+            <option value="videos">Vídeos</option>
+            <option value="apresentacoes">Apresentações</option>
+            <option value="normas">Normas</option>
+            <option value="audios">Áudios</option>
+            <option value="outros">Outros</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="data" className="mb-1 block text-sm font-medium text-text-main">
+            Data <span className="text-danger">*</span>
+          </label>
+          <input
+            id="data"
+            type="date"
+            {...register("data")}
+            className="w-full rounded-md border border-black/15 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+          {errors.data && <p className="mt-1 text-xs text-danger">{errors.data.message}</p>}
+        </div>
       </div>
 
       <div className="rounded-md border border-dashed border-black/20 p-4">
