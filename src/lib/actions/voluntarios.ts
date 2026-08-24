@@ -162,16 +162,29 @@ export async function redefinirSenhaVoluntario(email: string, novaSenha: string)
     ? undefined
     : lista.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
 
-  if (!usuario) {
-    return { error: "Não foi possível localizar a conta deste voluntário." };
+  if (usuario) {
+    const { error } = await supabase.auth.admin.updateUserById(usuario.id, {
+      password: novaSenha,
+    });
+
+    if (error) {
+      return { error: "Não foi possível redefinir a senha. Tente novamente." };
+    }
+
+    return { error: null };
   }
 
-  const { error } = await supabase.auth.admin.updateUserById(usuario.id, {
+  // Voluntário cadastrado sem conta de acesso (ex: registro antigo, de
+  // antes do sistema de convite/senha) — cria a conta agora com a senha
+  // definida pelo organizador.
+  const { error: erroCriar } = await supabase.auth.admin.createUser({
+    email,
     password: novaSenha,
+    email_confirm: true,
   });
 
-  if (error) {
-    return { error: "Não foi possível redefinir a senha. Tente novamente." };
+  if (erroCriar) {
+    return { error: "Não foi possível criar o acesso do voluntário. Tente novamente." };
   }
 
   return { error: null };
