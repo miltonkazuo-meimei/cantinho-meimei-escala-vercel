@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Save, Lock, Cake } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { criarVoluntario } from "@/lib/actions/voluntarios";
+import { criarVoluntario, redefinirSenhaVoluntario } from "@/lib/actions/voluntarios";
 import { ToggleField } from "@/components/ToggleField";
 
 const voluntarioSchema = z
@@ -18,11 +18,19 @@ const voluntarioSchema = z
     data_nascimento: z.string().optional(),
     modoSenha: z.enum(["convite", "manual"]).optional(),
     senha: z.string().optional(),
+    redefinirSenha: z.boolean().optional(),
     eh_organizador: z.boolean(),
     ativo: z.boolean(),
   })
   .superRefine((dados, ctx) => {
     if (dados.modoSenha === "manual" && (dados.senha ?? "").length < 6) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["senha"],
+        message: "A senha deve ter pelo menos 6 caracteres",
+      });
+    }
+    if (dados.redefinirSenha && (dados.senha ?? "").length < 6) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["senha"],
@@ -57,6 +65,7 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
       data_nascimento: "",
       modoSenha: "convite",
       senha: "",
+      redefinirSenha: false,
       eh_organizador: false,
       ativo: true,
       ...valoresIniciais,
@@ -64,6 +73,7 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
   });
 
   const modoSenha = useWatch({ control, name: "modoSenha" });
+  const redefinirSenha = useWatch({ control, name: "redefinirSenha" });
 
   async function onSubmit(valores: VoluntarioFormValues) {
     setErroServidor(null);
@@ -104,6 +114,16 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
           setErroServidor("Não foi possível salvar o voluntário. Tente novamente.");
         }
         return;
+      }
+
+      if (valores.redefinirSenha && valores.senha) {
+        const emailConta = valoresIniciais?.email ?? valores.email;
+        const resultado = await redefinirSenhaVoluntario(emailConta, valores.senha);
+
+        if (resultado.error) {
+          setErroServidor(resultado.error);
+          return;
+        }
       }
     }
 
@@ -233,6 +253,48 @@ export function VoluntarioForm({ modo, voluntarioId, valoresIniciais }: Voluntar
               O voluntário receberá um e-mail de boas-vindas para criar a própria senha e
               acessar o sistema.
             </p>
+          )}
+        </div>
+      )}
+
+      {modo === "editar" && (
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-text-main">
+            <input
+              type="checkbox"
+              {...register("redefinirSenha")}
+              className="h-4 w-4 accent-primary"
+            />
+            Redefinir senha do voluntário
+          </label>
+
+          {redefinirSenha && (
+            <div className="mt-3">
+              <label htmlFor="senha" className="mb-1 block text-sm font-medium text-text-main">
+                Nova senha <span className="text-danger">*</span>
+              </label>
+              <div className="relative">
+                <Lock
+                  size={16}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40"
+                />
+                <input
+                  id="senha"
+                  type="password"
+                  autoComplete="new-password"
+                  {...register("senha")}
+                  className="w-full rounded-md border border-black/15 py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+              <p className="mt-1 text-xs text-text-main/50">
+                Compartilhe esta nova senha com o voluntário por outro meio (WhatsApp, por
+                exemplo).
+              </p>
+              {errors.senha && (
+                <p className="mt-1 text-xs text-danger">{errors.senha.message}</p>
+              )}
+            </div>
           )}
         </div>
       )}

@@ -145,3 +145,34 @@ export async function criarVoluntario(dados: CriarVoluntarioInput) {
 
   return { error: null };
 }
+
+export async function redefinirSenhaVoluntario(email: string, novaSenha: string) {
+  const perfil = await getPerfil();
+  if (!perfil.ehOrganizador) {
+    return { error: "Apenas organizadores podem redefinir senhas." };
+  }
+
+  const supabase = createServiceClient();
+
+  const { data: lista, error: erroListar } = await supabase.auth.admin.listUsers({
+    perPage: 1000,
+  });
+
+  const usuario = erroListar
+    ? undefined
+    : lista.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+
+  if (!usuario) {
+    return { error: "Não foi possível localizar a conta deste voluntário." };
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(usuario.id, {
+    password: novaSenha,
+  });
+
+  if (error) {
+    return { error: "Não foi possível redefinir a senha. Tente novamente." };
+  }
+
+  return { error: null };
+}
