@@ -116,10 +116,13 @@ export function MateriaisLista({ materiais, titulo, ehOrganizador }: MateriaisLi
             MODALIDADE_CONFIG[material.tipo as TipoMaterial] ?? MODALIDADE_CONFIG.outros;
           const Icon = config.icon;
           return (
-            <div key={material.id} className="flex items-center justify-between gap-4 px-4 py-3">
+            <div
+              key={material.id}
+              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
               <div className="flex min-w-0 items-center gap-3">
                 <span
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.className}`}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.className}`}
                 >
                   <Icon size={14} />
                   {config.label}
