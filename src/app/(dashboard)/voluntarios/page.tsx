@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { getPerfil } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { VoluntariosTable } from "@/components/VoluntariosTable";
+import { ExportarVoluntariosExcel } from "@/components/ExportarVoluntariosExcel";
 
 export default async function VoluntariosPage() {
   const perfil = await getPerfil();
@@ -22,13 +23,16 @@ export default async function VoluntariosPage() {
           </p>
         </div>
         {perfil.ehOrganizador && (
-          <Link
-            href="/voluntarios/novo"
-            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-          >
-            <Plus size={16} />
-            Novo Voluntário
-          </Link>
+          <div className="flex items-center gap-2">
+            <ExportarVoluntariosExcel voluntarios={voluntarios ?? []} />
+            <Link
+              href="/voluntarios/novo"
+              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+            >
+              <Plus size={16} />
+              Novo Voluntário
+            </Link>
+          </div>
         )}
       </div>
 
