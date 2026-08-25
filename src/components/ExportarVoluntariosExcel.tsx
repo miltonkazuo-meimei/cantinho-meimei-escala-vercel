@@ -70,7 +70,7 @@ export function ExportarVoluntariosExcel({ voluntarios }: ExportarVoluntariosExc
   }
 
   return (
-    <div className="relative">
+    <div className="relative hidden sm:block">
       <button
         onClick={exportar}
         className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
