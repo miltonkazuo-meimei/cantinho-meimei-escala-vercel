@@ -108,7 +108,7 @@ export function CalendarioMensal({ ehOrganizador }: CalendarioMensalProps) {
   return (
     <div className="rounded-xl bg-card p-4 shadow-sm">
       <style>{`
-        .fc-day-today { background: color-mix(in srgb, var(--color-primary) 8%, transparent) !important; }
+        .fc-day-today { background: color-mix(in srgb, var(--color-primary) 22%, transparent) !important; }
         .fc .fc-daygrid-day-number { padding: 4px; }
         .fc-theme-standard td, .fc-theme-standard th { border-color: rgba(0,0,0,0.08); }
         .fc-daygrid-day-frame { cursor: pointer; }
@@ -129,8 +129,13 @@ export function CalendarioMensal({ ehOrganizador }: CalendarioMensalProps) {
               <span>{arg.dayNumberText}</span>
               {agendamento && (
                 <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: "var(--color-primary)" }}
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{
+                    backgroundColor:
+                      agendamento.status === "cancelado"
+                        ? "var(--color-danger)"
+                        : "var(--color-primary)",
+                  }}
                 />
               )}
             </div>
