@@ -23,7 +23,7 @@ export default async function VoluntariosPage() {
           </p>
         </div>
         {perfil.ehOrganizador && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <ExportarVoluntariosExcel voluntarios={voluntarios ?? []} />
             <Link
               href="/voluntarios/novo"
