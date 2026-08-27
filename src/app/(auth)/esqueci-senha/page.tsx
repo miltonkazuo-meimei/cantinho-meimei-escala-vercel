@@ -29,7 +29,7 @@ export default function EsqueciSenhaPage() {
   async function onSubmit(dados: FormValues) {
     const supabase = createClient();
     await supabase.auth.resetPasswordForEmail(dados.email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+      redirectTo: `${window.location.origin}/auth/confirm`,
     });
     // Mensagem genérica sempre exibida, para não revelar se o e-mail existe.
     setEnviado(true);

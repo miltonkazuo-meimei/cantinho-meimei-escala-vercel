@@ -46,10 +46,16 @@ Vercel. Cada passo diz o que fazer e por quê.
      próprio). **Este é o erro mais comum** — se ficar apontando para
      `localhost`, os links de e-mail (convite/redefinir senha) levam o
      usuário para `localhost` em vez do site real.
-   - **Redirect URLs**: adicione a URL de produção + `/redefinir-senha`
-     (ex. `https://seu-dominio/redefinir-senha`), e o mesmo para qualquer
-     ambiente de preview do Vercel que for usar (`https://*.vercel.app/**`
-     funciona como coringa, se preferir liberar todos os previews).
+   - **Redirect URLs**: adicione a URL de produção com um coringa cobrindo
+     todo o domínio (ex. `https://seu-dominio/**`) — **não** baste
+     adicionar só `/redefinir-senha`; o app também usa `/auth/confirm`
+     (rota que troca o código do fluxo PKCE por uma sessão antes de
+     chegar em `/redefinir-senha`), e qualquer caminho faltando nessa
+     lista faz o Supabase silenciosamente redirecionar para a Site URL
+     "crua" em vez do caminho pedido — o sintoma é o link de e-mail levar
+     para `/login?code=...` em vez da tela de redefinir senha. O mesmo
+     coringa serve para qualquer ambiente de preview do Vercel que for
+     usar (`https://*.vercel.app/**`).
 5. Configurar **SMTP customizado** (Authentication → Emails → SMTP
    Settings) — o Supabase tem um limite baixíssimo de e-mails no SMTP
    padrão, insuficiente para uso real. Este projeto usa

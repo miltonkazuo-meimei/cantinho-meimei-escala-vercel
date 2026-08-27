@@ -187,25 +187,47 @@ src/components/                     <- um componente client por formulário/list
    Supabase Auth: `#access_token=...&refresh_token=...&type=recovery`),
    não como `?code=...`.
 
-   **Armadilha:** o cliente Supabase criado com `@supabase/ssr`
-   (`createBrowserClient`) tem `flowType` fixado internamente em `"pkce"`.
-   Nesse modo, `detectSessionInUrl` só processa automaticamente o formato
-   `?code=`; ele **ignora silenciosamente** tokens no `#hash`. Se você
-   simplesmente confiar na detecção automática, o usuário verá "link
-   inválido" mesmo com um link legítimo. A solução usada neste projeto: em
-   um `useEffect` na página, parsear manualmente
-   `window.location.hash` com `URLSearchParams`, extrair `access_token`,
-   `refresh_token` e `type`; se `type` for `"recovery"` **ou** `"invite"`,
-   chamar `supabase.auth.setSession({ access_token, refresh_token })`
-   manualmente, e só então limpar o hash da URL
-   (`window.history.replaceState`). Sem essa lógica manual, o fluxo de
-   redefinir senha e o de convite de boas-vindas simplesmente não
-   funcionam em produção.
+   **Armadilha — dois formatos de link diferentes, dependendo de quem
+   gera o link:**
+
+   - Links criados via **Admin API** (`admin.inviteUserByEmail`, usado no
+     convite de boas-vindas) chegam no formato antigo: depois do
+     `/verify` do Supabase, o navegador é redirecionado com os tokens no
+     **`#hash`** da URL (`#access_token=...&refresh_token=...&type=
+     invite`). Nenhum código de servidor processa isso automaticamente —
+     é resolvido em `/redefinir-senha`, num `useEffect` que faz o parse
+     manual de `window.location.hash` com `URLSearchParams` e chama
+     `supabase.auth.setSession({ access_token, refresh_token })`.
+   - Links criados por `supabase.auth.resetPasswordForEmail()` chamado
+     **do navegador** (usado em "esqueci a senha") passam pelo fluxo
+     PKCE, porque o cliente criado com `createBrowserClient` (`@supabase/
+     ssr`) tem `flowType` fixado em `"pkce"`. Esse link chega como
+     **`?code=...`** (query string, não hash) depois do `/verify`. Isso
+     **não** é processado automaticamente por nenhum componente client-
+     side: o `code_verifier` da troca PKCE só existe como cookie
+     definido no navegador que chamou `resetPasswordForEmail`, então a
+     troca do código pela sessão (`exchangeCodeForSession`) **precisa
+     acontecer no servidor**, numa Route Handler dedicada —
+     `src/app/auth/confirm/route.ts` — que lê `?code=` (ou `?token_hash=
+     &type=`, para o caso de o template de e-mail ser customizado), troca
+     pela sessão, e só então redireciona para `/redefinir-senha` (que
+     nesse ponto já tem sessão válida via cookie, sem precisar de parse
+     de hash). Por isso `resetPasswordForEmail` aponta `redirectTo` para
+     `${origem}/auth/confirm`, **não** diretamente para
+     `/redefinir-senha` (só o convite de boas-vindas aponta direto para
+     lá, porque usa o formato antigo). Sem essa rota — e sem ela estar
+     também na lista de "Redirect URLs" permitidas nas configurações de
+     Auth do Supabase — o Supabase cai de volta silenciosamente para a
+     Site URL "crua", o próprio middleware do app redireciona isso para
+     `/login` (preservando o `?code=` na querystring, mas perdendo o
+     destino), e o usuário só vê a tela de login de novo, sem nenhum erro
+     explícito.
 
 6. Middleware/proxy (`src/proxy.ts` + `src/lib/supabase/middleware.ts`)
    redireciona não-autenticados para `/login` (exceto rotas públicas
-   `/login`, `/esqueci-senha`, `/redefinir-senha`), e redireciona usuários
-   já autenticados que acessem `/login` de volta para `/calendario`.
+   `/login`, `/esqueci-senha`, `/redefinir-senha`, `/auth/confirm`), e
+   redireciona usuários já autenticados que acessem `/login` de volta
+   para `/calendario`.
 
 ### Modelo de dados
 
